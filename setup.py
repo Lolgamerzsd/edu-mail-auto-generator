@@ -1,6 +1,11 @@
 import subprocess
 import sys
-from __dwnldDrivers.versions import *
+
+try:
+    from __dwnldDrivers.versions import get_firefox_version, get_chrome_version, setup_Firefox, setup_Chrome
+except ImportError:
+    print("Error: Required module '__dwnldDrivers.versions' not found.")
+    sys.exit(1)
 
 ######## This script is only for educational purpose ########
 ######## use it on your own RISK ########
@@ -8,62 +13,59 @@ from __dwnldDrivers.versions import *
 ######## caused to you using this script ########
 
 def install(name):
-    subprocess.check_call([sys.executable, '-m', 'pip', 'install', name])
+    try:
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', name])
+    except subprocess.CalledProcessError as e:
+        print(f"Error installing package {name}: {e}")
+        sys.exit(1)
 
 def main():
-
     my_packages = ['requests', 'clint', 'faker', 'selenium', 'colorama']
+    installed_browsers = []
 
-    installed_pr = [] 
-    
     for package in my_packages:
         install(package)
         print('\n')
 
     print('Firefox')
     firefox_ver = get_firefox_version()
-    if firefox_ver != None:
-        is_firefox_there = 1
-        installed_pr.append('Firefox')
+    if firefox_ver:
+        installed_browsers.append('Firefox')
         setup_Firefox(firefox_ver)
     else:
-        is_firefox_there = 0
-        print('Firefox isn\'t installed')
-    
+        print("Firefox isn't installed")
+
     print('\nChrome')
     chrome_ver = get_chrome_version()
-
-    if chrome_ver != None:
-        is_chrome_there = 1
-        installed_pr.append('Chrome')
+    if chrome_ver:
+        installed_browsers.append('Chrome')
         setup_Chrome(chrome_ver)
     else:
-        is_chrome_there = 0
-        print('Chrome isn\'t installed')
-    
-    if is_firefox_there == 0 and is_chrome_there == 0:
+        print("Chrome isn't installed")
+
+    if not installed_browsers:
         print('Error - Setup installation failed \nReason - Please install either Chrome or Firefox browser to complete setup process')
-        exit()
+        sys.exit(1)
 
-    print('\nWich browser do you prefer to run script on')
+    print('\nWhich browser do you prefer to run the script on?')
 
-    for index, pr in enumerate(installed_pr, start=1):
-        print('\n[*] ' + str(index) + ' ' + pr)
-    
-    inpErr = True
+    for index, browser in enumerate(installed_browsers, start=1):
+        print(f"\n[*] {index} {browser}")
 
-    while inpErr != False:
-        print('\nEnter id ex - 1 or 2: ', end='')
-        userInput = int(input())
-
-        if userInput <= len(installed_pr) and userInput > 0:
-            selected = installed_pr[userInput - 1]
-            fp = open('prefBrowser.txt', 'w')
-            fp.write(selected.lower())
-            inpErr = False
-        else:
-             print('Wrong id, Either input 1 or 2')
+    while True:
+        try:
+            user_input = int(input('\nEnter id ex - 1 or 2: '))
+            if 1 <= user_input <= len(installed_browsers):
+                selected = installed_browsers[user_input - 1]
+                with open('prefBrowser.txt', 'w') as fp:
+                    fp.write(selected.lower())
+                break
+            else:
+                print('Wrong id, either input 1 or 2')
+        except ValueError:
+            print('Invalid input, please enter a number')
 
     print('Setup Completed')
+
 if __name__ == '__main__':
     main()
